@@ -17,6 +17,7 @@ Remember that you still have to make an **editorial decision for your use-case**
 
 Update: my use-case turned into a comprehensive dropdown menu off of a list of 2-tuples.  I've added a function to flatten the structure for this use case, and a ledgible version of the generated data structure for easy reference.
 
+Update again: It was brought to my attention that my original code provided deprecated timezones via pytz.  It is slightly non-trivial exclude those, so I've updated the script.
 
 ```
 from collections import defaultdict
@@ -38,14 +39,18 @@ def timedelta_to_label(td: timedelta) -> str:
 def string_sorter(key: str):
     """ get the first timedelta's floating point representation as the 'key' in our sort algo."""
     return float(key.split("/")[0].replace(":", "."))
-
-
 def build_dictionary_of_timezones():
     # defaultdicts are cool.
     zones_by_offset = defaultdict(list)
 
-    # there are more timezones in pytz.all_timezones
-    for zone_name in pytz.common_timezones:
+    # (at time of development) this provides all non-deprecated timezones.
+    tzs = []
+    for _, timezones_by_country in pytz.country_timezones.items():
+        tzs.extend(timezones_by_country)
+    tzs.sort()
+
+    # pytz.common_timezones includes some deprecated tzs, pytz.all_timezones has even more.
+    for zone_name in tzs:
         # this 'tz_info' variable's type may be dependent on your platform, which is ... just insane.
         # This has been tested and works on Ubuntu and AWS Linux 1.
         tz_info: tz.tzfile = tz.gettz(zone_name)
@@ -74,6 +79,7 @@ def build_dictionary_of_timezones():
     return and_finally_sorted
 
 
+
 def flatten_time_zones(all_zones_by_offset):
     """ Builds a dropdown-friendly list of tuples for populating a dropdown. """
     ret = []
@@ -94,7 +100,6 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Adak", "-10:00/-9:00 - America/Adak"],
  ["Pacific/Honolulu", "-10:00/-9:30 - Pacific/Honolulu"],
  ["Pacific/Rarotonga", "-10:00/-9:30 - Pacific/Rarotonga"],
- ["US/Hawaii", "-10:00/-9:30 - US/Hawaii"],
  ["Pacific/Tahiti", "-10:00 - Pacific/Tahiti"],
  ["Pacific/Marquesas", "-9:30 - Pacific/Marquesas"],
  ["America/Anchorage", "-9:00/-8:00 - America/Anchorage"],
@@ -103,13 +108,10 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Nome", "-9:00/-8:00 - America/Nome"],
  ["America/Sitka", "-9:00/-8:00 - America/Sitka"],
  ["America/Yakutat", "-9:00/-8:00 - America/Yakutat"],
- ["US/Alaska", "-9:00/-8:00 - US/Alaska"],
  ["Pacific/Gambier", "-9:00 - Pacific/Gambier"],
  ["America/Los_Angeles", "-8:00/-7:00 - America/Los_Angeles"],
  ["America/Tijuana", "-8:00/-7:00 - America/Tijuana"],
  ["America/Vancouver", "-8:00/-7:00 - America/Vancouver"],
- ["Canada/Pacific", "-8:00/-7:00 - Canada/Pacific"],
- ["US/Pacific", "-8:00/-7:00 - US/Pacific"],
  ["Pacific/Pitcairn", "-8:00 - Pacific/Pitcairn"],
  ["America/Boise", "-7:00/-6:00 - America/Boise"],
  ["America/Cambridge_Bay", "-7:00/-6:00 - America/Cambridge_Bay"],
@@ -122,9 +124,6 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Ojinaga", "-7:00/-6:00 - America/Ojinaga"],
  ["America/Phoenix", "-7:00/-6:00 - America/Phoenix"],
  ["America/Yellowknife", "-7:00/-6:00 - America/Yellowknife"],
- ["Canada/Mountain", "-7:00/-6:00 - Canada/Mountain"],
- ["US/Arizona", "-7:00/-6:00 - US/Arizona"],
- ["US/Mountain", "-7:00/-6:00 - US/Mountain"],
  ["America/Creston", "-7:00 - America/Creston"],
  ["America/Dawson", "-7:00 - America/Dawson"],
  ["America/Dawson_Creek", "-7:00 - America/Dawson_Creek"],
@@ -152,10 +151,8 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Resolute", "-6:00/-5:00 - America/Resolute"],
  ["America/Tegucigalpa", "-6:00/-5:00 - America/Tegucigalpa"],
  ["America/Winnipeg", "-6:00/-5:00 - America/Winnipeg"],
- ["Canada/Central", "-6:00/-5:00 - Canada/Central"],
  ["Pacific/Easter", "-6:00/-5:00 - Pacific/Easter"],
  ["Pacific/Galapagos", "-6:00/-5:00 - Pacific/Galapagos"],
- ["US/Central", "-6:00/-5:00 - US/Central"],
  ["America/Regina", "-6:00 - America/Regina"],
  ["America/Swift_Current", "-6:00 - America/Swift_Current"],
  ["America/Atikokan", "-5:00 - America/Atikokan"],
@@ -187,8 +184,6 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Rio_Branco", "-5:00/-4:00 - America/Rio_Branco"],
  ["America/Thunder_Bay", "-5:00/-4:00 - America/Thunder_Bay"],
  ["America/Toronto", "-5:00/-4:00 - America/Toronto"],
- ["Canada/Eastern", "-5:00/-4:00 - Canada/Eastern"],
- ["US/Eastern", "-5:00/-4:00 - US/Eastern"],
  ["America/Anguilla", "-4:00 - America/Anguilla"],
  ["America/Antigua", "-4:00 - America/Antigua"],
  ["America/Aruba", "-4:00 - America/Aruba"],
@@ -226,11 +221,9 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Santiago", "-4:00/-3:00 - America/Santiago"],
  ["America/Thule", "-4:00/-3:00 - America/Thule"],
  ["Atlantic/Bermuda", "-4:00/-3:00 - Atlantic/Bermuda"],
- ["Canada/Atlantic", "-4:00/-3:00 - Canada/Atlantic"],
  ["America/La_Paz", "-4:00/-3:32 - America/La_Paz"],
  ["America/Santo_Domingo", "-4:00/-4:30 - America/Santo_Domingo"],
  ["America/St_Johns", "-3:30/-2:30 - America/St_Johns"],
- ["Canada/Newfoundland", "-3:30/-2:30 - Canada/Newfoundland"],
  ["America/Araguaina", "-3:00/-2:00 - America/Araguaina"],
  ["America/Argentina/Buenos_Aires", "-3:00/-2:00 - America/Argentina/Buenos_Aires"],
  ["America/Argentina/Catamarca", "-3:00/-2:00 - America/Argentina/Catamarca"],
@@ -238,7 +231,7 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["America/Argentina/Jujuy", "-3:00/-2:00 - America/Argentina/Jujuy"],
  ["America/Argentina/La_Rioja", "-3:00/-2:00 - America/Argentina/La_Rioja"],
  ["America/Argentina/Mendoza", "-3:00/-2:00 - America/Argentina/Mendoza"],
- ["America/Argentina/Rio_Gallegos","-3:00/-2:00 - America/Argentina/Rio_Gallegos"],
+ ["America/Argentina/Rio_Gallegos", "-3:00/-2:00 - America/Argentina/Rio_Gallegos"],
  ["America/Argentina/Salta", "-3:00/-2:00 - America/Argentina/Salta"],
  ["America/Argentina/San_Juan", "-3:00/-2:00 - America/Argentina/San_Juan"],
  ["America/Argentina/Tucuman", "-3:00/-2:00 - America/Argentina/Tucuman"],
@@ -279,8 +272,6 @@ COMMON_TIMEZONES_DROPDOWN looks like this (intentionally built with lists so tha
  ["Africa/Sao_Tome", "+0:00 - Africa/Sao_Tome"],
  ["Atlantic/Reykjavik", "+0:00 - Atlantic/Reykjavik"],
  ["Atlantic/St_Helena", "+0:00 - Atlantic/St_Helena"],
- ["GMT", "+0:00 - GMT"],
- ["UTC", "+0:00 - UTC"],
  ["Africa/Accra", "+0:00/+0:30 - Africa/Accra"],
  ["America/Danmarkshavn", "+0:00/-2:00 - America/Danmarkshavn"],
  ["Antarctica/Troll", "+0:00/+2:00 - Antarctica/Troll"],
