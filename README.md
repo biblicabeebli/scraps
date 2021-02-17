@@ -26,9 +26,6 @@ from datetime import timedelta
 import pytz
 from dateutil import tz
 
-REGION_SUBREGION_SEPARATOR = " - "
-REGION_SEPARATOR = "\n"
-
 
 def timedelta_to_label(td: timedelta) -> str:
     """ returns a string like +1:00 """
