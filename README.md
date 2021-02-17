@@ -3,6 +3,45 @@ A repository containing various code scraps that I have developed over time, the
 
 All content within this repository is public domain and comes with no warranty or guarantees whatsoever.  Bugs probably exist.
 
+## An elegant timeout cache decorator that I put together.
+Gist at https://gist.github.com/biblicabeebli/5cc40b4ded7edc03d07cb87336efb4b6
+
+```
+from functools import wraps
+from time import perf_counter  # perf_counter is a highly quality timestamp
+
+# Keys are the functions themselves, values are a tuple containing the timeout expiry
+# of the cache entry, and the cached return value.
+function_cache = {}
+
+
+def timeout_cache(seconds: int or float):
+    def check_timeout_cache(wrapped_func):
+
+        @wraps(wrapped_func)
+        def cache_or_call(*args, **kwargs):
+            # default (performant) case: look for cached function, check timeout.
+            try:
+                timeout, ret_val = function_cache[wrapped_func]
+                if perf_counter() < timeout:
+                    return ret_val
+            except KeyError:
+                pass
+            # slow case, cache miss: run function, cache the output, return output.
+            ret_val = wrapped_func(*args, **kwargs)
+            function_cache[wrapped_func] = (perf_counter() + seconds, ret_val)
+            return ret_val
+
+        return cache_or_call
+    return check_timeout_cache
+
+
+# example:
+@timeout_cache(10)
+def now_kinda():
+    from datetime import datetime
+    return datetime.now()
+```
 
 ## Generate a Useful Data Structure of All Timezones While Including Daylight Savings Time Information
 This code generates a dictionary of UTC offsets, including the DST offset, matched to a list of all timezones names that match these offsets exactly, sorted by the offset value and then by name of the time zone.
@@ -18,6 +57,8 @@ Remember that you still have to make an **editorial decision for your use-case**
 Update: my use-case turned into a comprehensive dropdown menu off of a list of 2-tuples.  I've added a function to flatten the structure for this use case, and a ledgible version of the generated data structure for easy reference.
 
 Update again: It was brought to my attention that my original code provided deprecated timezones via pytz.  It is slightly non-trivial exclude those, so I've updated the script.
+
+Gist at https://gist.github.com/biblicabeebli/5cc40b4ded7edc03d07cb87336efb4b6
 
 ```
 from collections import defaultdict
